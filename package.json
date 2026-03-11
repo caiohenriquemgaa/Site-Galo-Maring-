@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "typecheck": "tsc --noEmit",
-    "build": "npm run typecheck && next build",
+    "dev": "next dev --webpack",
+    "typecheck": "npx tsc --noEmit",
+    "build": "npm run typecheck && next build --webpack",
     "start": "next start",
     "lint": "eslint ."
   },
