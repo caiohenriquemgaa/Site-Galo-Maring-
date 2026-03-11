@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { LogOut, Trash2, Upload } from "lucide-react"
@@ -18,7 +18,7 @@ import {
   uploadAsset,
   upsertSiteSettings,
 } from "@/lib/admin/actions"
-import { getSupabaseBrowserClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 
 const sectionClass = "rounded-xl border border-border bg-card p-6 space-y-4"
 const inputClass =
@@ -69,7 +69,6 @@ interface AdminPanelProps {
 
 export function AdminPanel({ adminEmail }: AdminPanelProps) {
   const router = useRouter()
-  const supabase = useMemo(() => getSupabaseBrowserClient(), [])
 
   const [isLoading, setIsLoading] = useState(true)
   const [activeAction, setActiveAction] = useState<string | null>(null)
@@ -132,15 +131,6 @@ export function AdminPanel({ adminEmail }: AdminPanelProps) {
   }
 
   async function loadData() {
-    if (!supabase) {
-      setStatus({
-        type: "error",
-        message: "Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY para usar o painel.",
-      })
-      setIsLoading(false)
-      return
-    }
-
     setIsLoading(true)
 
     try {
@@ -169,8 +159,6 @@ export function AdminPanel({ adminEmail }: AdminPanelProps) {
   }
 
   async function saveSiteSettingsAction() {
-    if (!supabase) return
-
     await runAction("site_settings", async () => {
       let heroImage: string | undefined
       if (heroImageFile) {
@@ -194,8 +182,6 @@ export function AdminPanel({ adminEmail }: AdminPanelProps) {
   }
 
   async function addMatchAction() {
-    if (!supabase) return
-
     await runAction("matches", async () => {
       let badgeHome: string | null = null
       let badgeAway: string | null = null
@@ -226,7 +212,7 @@ export function AdminPanel({ adminEmail }: AdminPanelProps) {
   }
 
   async function addSponsorAction() {
-    if (!supabase || !sponsorLogoFile) return
+    if (!sponsorLogoFile) return
 
     await runAction("sponsors", async () => {
       await validateImage(sponsorLogoFile, 600, 300, "Patrocinador", { pngOnly: true })
@@ -246,7 +232,7 @@ export function AdminPanel({ adminEmail }: AdminPanelProps) {
   }
 
   async function addProductAction() {
-    if (!supabase || !productImageFile) return
+    if (!productImageFile) return
 
     await runAction("products", async () => {
       await validateImage(productImageFile, 1000, 1000, "Produto")
@@ -269,7 +255,7 @@ export function AdminPanel({ adminEmail }: AdminPanelProps) {
   }
 
   async function addNewsAction() {
-    if (!supabase || !newsImageFile) return
+    if (!newsImageFile) return
 
     await runAction("news", async () => {
       await validateImage(newsImageFile, 1200, 800, "Noticia")
@@ -298,8 +284,6 @@ export function AdminPanel({ adminEmail }: AdminPanelProps) {
     id: string,
     successMessage: string
   ) {
-    if (!supabase) return
-
     await runAction(`delete-${table}`, async () => {
       await deleteEntity(supabase, table, id)
       setStatus({ type: "success", message: successMessage })
@@ -308,8 +292,6 @@ export function AdminPanel({ adminEmail }: AdminPanelProps) {
   }
 
   async function logout() {
-    if (!supabase) return
-
     await runAction("logout", async () => {
       const { error } = await supabase.auth.signOut()
       if (error) throw error

@@ -6,10 +6,6 @@ export default async function AdminPage() {
   const supabase = await getSupabaseServerClient()
   const adminEmail = process.env.ADMIN_EMAIL ?? "galomaringatv@gmail.com"
 
-  if (!supabase) {
-    redirect("/admin/login?error=config")
-  }
-
   const {
     data: { user },
     error,

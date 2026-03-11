@@ -1,8 +1,8 @@
 "use client"
 
-import { FormEvent, useEffect, useMemo, useState } from "react"
+import { FormEvent, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { getSupabaseBrowserClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 
 const inputClass =
   "w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
@@ -12,7 +12,6 @@ const buttonClass =
 export function AdminLoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const supabase = useMemo(() => getSupabaseBrowserClient(), [])
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -24,8 +23,6 @@ export function AdminLoginForm() {
 
     if (error === "unauthorized") {
       setMessage("Acesso negado para este usuario.")
-    } else if (error === "config") {
-      setMessage("Configuracao do Supabase ausente no ambiente.")
     } else if (error === "session") {
       setMessage("Sua sessao expirou. Faca login novamente.")
     }
@@ -49,11 +46,6 @@ export function AdminLoginForm() {
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-
-    if (!supabase) {
-      setMessage("Configuracao do Supabase ausente no ambiente.")
-      return
-    }
 
     setIsLoading(true)
     setMessage(null)
