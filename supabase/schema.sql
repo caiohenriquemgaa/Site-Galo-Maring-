@@ -53,31 +53,52 @@ alter table sponsors enable row level security;
 alter table products enable row level security;
 alter table site_settings enable row level security;
 
--- MVP open policies. Restrict before production launch.
+-- Public read access for site rendering
 drop policy if exists "public read news" on news;
 create policy "public read news" on news for select using (true);
-drop policy if exists "public write news" on news;
-create policy "public write news" on news for all using (true) with check (true);
 
 drop policy if exists "public read matches" on matches;
 create policy "public read matches" on matches for select using (true);
-drop policy if exists "public write matches" on matches;
-create policy "public write matches" on matches for all using (true) with check (true);
 
 drop policy if exists "public read sponsors" on sponsors;
 create policy "public read sponsors" on sponsors for select using (true);
-drop policy if exists "public write sponsors" on sponsors;
-create policy "public write sponsors" on sponsors for all using (true) with check (true);
 
 drop policy if exists "public read products" on products;
 create policy "public read products" on products for select using (true);
-drop policy if exists "public write products" on products;
-create policy "public write products" on products for all using (true) with check (true);
 
 drop policy if exists "public read site_settings" on site_settings;
 create policy "public read site_settings" on site_settings for select using (true);
-drop policy if exists "public write site_settings" on site_settings;
-create policy "public write site_settings" on site_settings for all using (true) with check (true);
+
+-- Admin write access (email must match your admin account)
+drop policy if exists "admin write news" on news;
+create policy "admin write news" on news
+for all
+using (auth.role() = 'authenticated' and auth.email() = 'galomaringatv@gmail.com')
+with check (auth.role() = 'authenticated' and auth.email() = 'galomaringatv@gmail.com');
+
+drop policy if exists "admin write matches" on matches;
+create policy "admin write matches" on matches
+for all
+using (auth.role() = 'authenticated' and auth.email() = 'galomaringatv@gmail.com')
+with check (auth.role() = 'authenticated' and auth.email() = 'galomaringatv@gmail.com');
+
+drop policy if exists "admin write sponsors" on sponsors;
+create policy "admin write sponsors" on sponsors
+for all
+using (auth.role() = 'authenticated' and auth.email() = 'galomaringatv@gmail.com')
+with check (auth.role() = 'authenticated' and auth.email() = 'galomaringatv@gmail.com');
+
+drop policy if exists "admin write products" on products;
+create policy "admin write products" on products
+for all
+using (auth.role() = 'authenticated' and auth.email() = 'galomaringatv@gmail.com')
+with check (auth.role() = 'authenticated' and auth.email() = 'galomaringatv@gmail.com');
+
+drop policy if exists "admin write site_settings" on site_settings;
+create policy "admin write site_settings" on site_settings
+for all
+using (auth.role() = 'authenticated' and auth.email() = 'galomaringatv@gmail.com')
+with check (auth.role() = 'authenticated' and auth.email() = 'galomaringatv@gmail.com');
 
 insert into site_settings (id, hero_title, hero_subtitle, hero_image, phone, email, address)
 values (
@@ -106,11 +127,13 @@ create policy "Public read site assets"
 on storage.objects for select
 using (bucket_id = 'site-assets');
 
-drop policy if exists "Public insert site assets by folder" on storage.objects;
-create policy "Public insert site assets by folder"
+drop policy if exists "Admin insert site assets by folder" on storage.objects;
+create policy "Admin insert site assets by folder"
 on storage.objects for insert
 with check (
   bucket_id = 'site-assets'
+  and auth.role() = 'authenticated'
+  and auth.email() = 'galomaringatv@gmail.com'
   and (
     name like 'hero/%'
     or name like 'news/%'
@@ -120,11 +143,13 @@ with check (
   )
 );
 
-drop policy if exists "Public update site assets by folder" on storage.objects;
-create policy "Public update site assets by folder"
+drop policy if exists "Admin update site assets by folder" on storage.objects;
+create policy "Admin update site assets by folder"
 on storage.objects for update
 using (
   bucket_id = 'site-assets'
+  and auth.role() = 'authenticated'
+  and auth.email() = 'galomaringatv@gmail.com'
   and (
     name like 'hero/%'
     or name like 'news/%'
@@ -135,6 +160,8 @@ using (
 )
 with check (
   bucket_id = 'site-assets'
+  and auth.role() = 'authenticated'
+  and auth.email() = 'galomaringatv@gmail.com'
   and (
     name like 'hero/%'
     or name like 'news/%'
@@ -144,11 +171,13 @@ with check (
   )
 );
 
-drop policy if exists "Public delete site assets by folder" on storage.objects;
-create policy "Public delete site assets by folder"
+drop policy if exists "Admin delete site assets by folder" on storage.objects;
+create policy "Admin delete site assets by folder"
 on storage.objects for delete
 using (
   bucket_id = 'site-assets'
+  and auth.role() = 'authenticated'
+  and auth.email() = 'galomaringatv@gmail.com'
   and (
     name like 'hero/%'
     or name like 'news/%'

@@ -125,7 +125,7 @@ const fallbackContent: SiteContent = {
 }
 
 export async function getSiteContent(): Promise<SiteContent> {
-  const supabase = getSupabaseServerClient()
+  const supabase = await getSupabaseServerClient()
 
   if (!supabase) {
     return fallbackContent
