@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { LogOut, Trash2, Upload } from "lucide-react"
@@ -18,7 +18,7 @@ import {
   uploadAsset,
   upsertSiteSettings,
 } from "@/lib/admin/actions"
-import { supabase } from "@/lib/supabase/client"
+import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 
 const sectionClass = "rounded-xl border border-border bg-card p-6 space-y-4"
 const inputClass =
@@ -69,6 +69,7 @@ interface AdminPanelProps {
 
 export function AdminPanel({ adminEmail }: AdminPanelProps) {
   const router = useRouter()
+  const supabase = useMemo(() => getSupabaseBrowserClient(), [])
 
   const [isLoading, setIsLoading] = useState(true)
   const [activeAction, setActiveAction] = useState<string | null>(null)
