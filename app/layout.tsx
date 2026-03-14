@@ -16,7 +16,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: 'Galo Maringá FC | Site Oficial',
-  description: 'Site oficial do Galo Maringá Futebol Clube. Acompanhe notícias, jogos, loja oficial e muito mais do seu clube do coração.',
+  description: 'Site oficial do Galo Maringá. Acompanhe notícias, jogos, loja oficial e muito mais do seu clube do coração.',
   generator: 'v0.app',
   keywords: ['Galo Maringá', 'futebol', 'clube', 'Paraná', 'futebol brasileiro'],
   icons: {
