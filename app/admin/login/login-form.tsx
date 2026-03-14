@@ -1,7 +1,7 @@
 "use client"
 
 import { FormEvent, useEffect, useMemo, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 
 const inputClass =
@@ -10,7 +10,6 @@ const buttonClass =
   "inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
 
 export function AdminLoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = useMemo(() => getSupabaseBrowserClient(), [])
   const isConfigured = supabase !== null
@@ -31,24 +30,10 @@ export function AdminLoginForm() {
       setMessage("Painel indisponivel no momento. Verifique a configuracao do Supabase.")
     } else if (!isConfigured) {
       setMessage("Painel indisponivel no momento. Verifique a configuracao do Supabase.")
+    } else {
+      setMessage(null)
     }
   }, [isConfigured, searchParams])
-
-  useEffect(() => {
-    async function checkSession() {
-      if (!supabase) return
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (user) {
-        router.replace("/admin")
-      }
-    }
-
-    void checkSession()
-  }, [router, supabase])
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()

@@ -1,7 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 
+function redirectWithCookies(request: NextRequest, response: NextResponse, path: string) {
+  const redirectResponse = NextResponse.redirect(new URL(path, request.url))
+
+  response.cookies.getAll().forEach((cookie) => {
+    redirectResponse.cookies.set(cookie)
+  })
+
+  return redirectResponse
+}
+
 export async function middleware(request: NextRequest) {
+  const isLoginRoute = request.nextUrl.pathname.startsWith("/admin/login")
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -12,7 +23,11 @@ export async function middleware(request: NextRequest) {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!url || !anonKey) {
-    return response
+    if (isLoginRoute) {
+      return response
+    }
+
+    return NextResponse.redirect(new URL("/admin/login?error=config", request.url))
   }
 
   const supabase = createServerClient(url, anonKey, {
@@ -38,25 +53,27 @@ export async function middleware(request: NextRequest) {
 
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser()
 
   const adminEmail = (process.env.ADMIN_EMAIL ?? "galomaringatv@gmail.com").toLowerCase()
-  const isLoginRoute = request.nextUrl.pathname.startsWith("/admin/login")
 
-  if (isLoginRoute) {
-    if (user && (user.email ?? "").toLowerCase() === adminEmail) {
-      return NextResponse.redirect(new URL("/admin", request.url))
+  if (error || !user) {
+    if (isLoginRoute) {
+      return response
     }
-    return response
-  }
 
-  if (!user) {
-    return NextResponse.redirect(new URL("/admin/login?error=session", request.url))
+    return redirectWithCookies(request, response, "/admin/login?error=session")
   }
 
   if ((user.email ?? "").toLowerCase() !== adminEmail) {
     await supabase.auth.signOut()
-    return NextResponse.redirect(new URL("/admin/login?error=unauthorized", request.url))
+
+    return redirectWithCookies(request, response, "/admin/login?error=unauthorized")
+  }
+
+  if (isLoginRoute) {
+    return redirectWithCookies(request, response, "/admin")
   }
 
   return response
