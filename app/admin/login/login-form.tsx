@@ -13,6 +13,7 @@ export function AdminLoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = useMemo(() => getSupabaseBrowserClient(), [])
+  const isConfigured = supabase !== null
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -26,8 +27,12 @@ export function AdminLoginForm() {
       setMessage("Acesso negado para este usuario.")
     } else if (error === "session") {
       setMessage("Sua sessao expirou. Faca login novamente.")
+    } else if (error === "config") {
+      setMessage("Painel indisponivel no momento. Verifique a configuracao do Supabase.")
+    } else if (!isConfigured) {
+      setMessage("Painel indisponivel no momento. Verifique a configuracao do Supabase.")
     }
-  }, [searchParams])
+  }, [isConfigured, searchParams])
 
   useEffect(() => {
     async function checkSession() {
@@ -47,6 +52,11 @@ export function AdminLoginForm() {
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    if (!supabase) {
+      setMessage("Painel indisponivel no momento. Verifique a configuracao do Supabase.")
+      return
+    }
 
     setIsLoading(true)
     setMessage(null)
@@ -91,7 +101,7 @@ export function AdminLoginForm() {
           required
         />
 
-        <button className={buttonClass + " w-full"} type="submit" disabled={isLoading}>
+        <button className={buttonClass + " w-full"} type="submit" disabled={isLoading || !isConfigured}>
           {isLoading ? "Entrando..." : "Entrar"}
         </button>
       </form>

@@ -25,6 +25,8 @@ const inputClass =
   "w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
 const buttonClass =
   "inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+const supabaseConfigMessage =
+  "Supabase nao configurado. Verifique NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY."
 
 async function getImageDimensions(file: File): Promise<{ width: number; height: number }> {
   const objectUrl = URL.createObjectURL(file)
@@ -112,8 +114,22 @@ export function AdminPanel({ adminEmail }: AdminPanelProps) {
   const [address, setAddress] = useState("")
 
   useEffect(() => {
+    if (!supabase) {
+      setStatus({ type: "error", message: supabaseConfigMessage })
+      setIsLoading(false)
+      return
+    }
+
     void loadData()
-  }, [])
+  }, [supabase])
+
+  function getSupabaseOrThrow() {
+    if (!supabase) {
+      throw new Error(supabaseConfigMessage)
+    }
+
+    return supabase
+  }
 
   async function runAction(action: string, fn: () => Promise<void>) {
     setActiveAction(action)
@@ -135,7 +151,8 @@ export function AdminPanel({ adminEmail }: AdminPanelProps) {
     setIsLoading(true)
 
     try {
-      const data = await fetchAdminData(supabase)
+      const client = getSupabaseOrThrow()
+      const data = await fetchAdminData(client)
 
       if (data.settings) {
         setHeroTitle(data.settings.hero_title)
@@ -161,13 +178,14 @@ export function AdminPanel({ adminEmail }: AdminPanelProps) {
 
   async function saveSiteSettingsAction() {
     await runAction("site_settings", async () => {
+      const client = getSupabaseOrThrow()
       let heroImage: string | undefined
       if (heroImageFile) {
         await validateImage(heroImageFile, 1920, 1080, "Hero")
-        heroImage = await uploadAsset(supabase, heroImageFile, "hero")
+        heroImage = await uploadAsset(client, heroImageFile, "hero")
       }
 
-      await upsertSiteSettings(supabase, {
+      await upsertSiteSettings(client, {
         hero_title: heroTitle,
         hero_subtitle: heroSubtitle,
         phone,
@@ -184,13 +202,14 @@ export function AdminPanel({ adminEmail }: AdminPanelProps) {
 
   async function addMatchAction() {
     await runAction("matches", async () => {
+      const client = getSupabaseOrThrow()
       let badgeHome: string | null = null
       let badgeAway: string | null = null
 
-      if (badgeHomeFile) badgeHome = await uploadAsset(supabase, badgeHomeFile, "matches")
-      if (badgeAwayFile) badgeAway = await uploadAsset(supabase, badgeAwayFile, "matches")
+      if (badgeHomeFile) badgeHome = await uploadAsset(client, badgeHomeFile, "matches")
+      if (badgeAwayFile) badgeAway = await uploadAsset(client, badgeAwayFile, "matches")
 
-      await createMatch(supabase, {
+      await createMatch(client, {
         team_home: teamHome,
         team_away: teamAway,
         category: matchCategory,
@@ -216,10 +235,11 @@ export function AdminPanel({ adminEmail }: AdminPanelProps) {
     if (!sponsorLogoFile) return
 
     await runAction("sponsors", async () => {
+      const client = getSupabaseOrThrow()
       await validateImage(sponsorLogoFile, 600, 300, "Patrocinador", { pngOnly: true })
-      const logo = await uploadAsset(supabase, sponsorLogoFile, "sponsors")
+      const logo = await uploadAsset(client, sponsorLogoFile, "sponsors")
 
-      await createSponsor(supabase, {
+      await createSponsor(client, {
         name: sponsorName,
         logo,
         type: sponsorType,
@@ -236,10 +256,11 @@ export function AdminPanel({ adminEmail }: AdminPanelProps) {
     if (!productImageFile) return
 
     await runAction("products", async () => {
+      const client = getSupabaseOrThrow()
       await validateImage(productImageFile, 1000, 1000, "Produto")
-      const image = await uploadAsset(supabase, productImageFile, "products")
+      const image = await uploadAsset(client, productImageFile, "products")
 
-      await createProduct(supabase, {
+      await createProduct(client, {
         name: productName,
         price: Number(productPrice),
         image,
@@ -259,10 +280,11 @@ export function AdminPanel({ adminEmail }: AdminPanelProps) {
     if (!newsImageFile) return
 
     await runAction("news", async () => {
+      const client = getSupabaseOrThrow()
       await validateImage(newsImageFile, 1200, 800, "Noticia")
-      const image = await uploadAsset(supabase, newsImageFile, "news")
+      const image = await uploadAsset(client, newsImageFile, "news")
 
-      await createNews(supabase, {
+      await createNews(client, {
         title: newsTitle,
         summary: newsSummary,
         content: newsContent,
@@ -286,7 +308,8 @@ export function AdminPanel({ adminEmail }: AdminPanelProps) {
     successMessage: string
   ) {
     await runAction(`delete-${table}`, async () => {
-      await deleteEntity(supabase, table, id)
+      const client = getSupabaseOrThrow()
+      await deleteEntity(client, table, id)
       setStatus({ type: "success", message: successMessage })
       await loadData()
     })
@@ -294,7 +317,8 @@ export function AdminPanel({ adminEmail }: AdminPanelProps) {
 
   async function logout() {
     await runAction("logout", async () => {
-      const { error } = await supabase.auth.signOut()
+      const client = getSupabaseOrThrow()
+      const { error } = await client.auth.signOut()
       if (error) throw error
       router.replace("/admin/login")
       router.refresh()
